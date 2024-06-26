@@ -18,4 +18,8 @@
     <ProjectReference Include="..\CS-Emerios-API-Tracker.Core\CS-Emerios-API-Tracker.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\" />
+  </ItemGroup>
+
 </Project>

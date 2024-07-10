@@ -34,9 +34,6 @@
                                   Immediate=true
                                   Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon"
                                   OnAdornmentClick="ShowPassword" AdornmentAriaLabel="Show Password"/>
-
-                    <MudAlert Severity="Severity.Warning" Class="mt-4">Use windows credentials if you are working on site, and use vpn credentials if you are working from home.</MudAlert>
-
                 </MudCardContent>
                 <MudCardActions Class="justify-content-center">
                 <MudButton Disabled="@_processing" ButtonType="ButtonType.Button" OnClick="@( async () => await RequestLogIn())" FullWidth="true"
@@ -84,8 +81,8 @@
             return;
 
         }
-        //var result = true;
-        var result = await AD_Connection.CheckUserCredential(model.UsrUsername, model.UsrPassword);
+        var result = true;
+        //var result = await AD_Connection.CheckUserCredential(model.UsrUsername, model.UsrPassword);
 
         if (!result)
         {
@@ -119,7 +116,7 @@
         else
         {
 
-            navigator.NavigateTo("/test", true);
+            navigator.NavigateTo("/callrecords", true);
         }
 
 

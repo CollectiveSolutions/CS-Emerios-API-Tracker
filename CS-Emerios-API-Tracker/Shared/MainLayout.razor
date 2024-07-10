@@ -1,19 +1,64 @@
 ﻿@inherits LayoutComponentBase
 
+@attribute [Authorize]
+
+<MudThemeProvider  />
+<MudDialogProvider FullWidth="true" />
+<MudSnackbarProvider />
+
+
 <PageTitle>CS-Emerios-API-Tracker</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<MudLayout Class="main-body">
+    <MudAppBar Elevation="0" Dense="false">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudSpacer />
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle">
+            <ActivatorContent>
+                <MudAvatar  Size="Size.Medium">
+                    <MudIcon ></MudIcon>
+                </MudAvatar>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem OnClick="LogOutAction">Log Out</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </MudAppBar>
+    <MudDrawer OpenMiniOnHover="true" @bind-Open="@open" Color="Color.Dark" Elevation="1" PreserveOpenState="true">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h5">Emerios Tracker</MudText>
+        </MudDrawerHeader>
+        <NavMenu></NavMenu>
+    </MudDrawer>
+    <MudMainContent>
+        <div class="pb-16 pl-4 pr-4 pt-4">
             @Body
-        </article>
-    </main>
-</div>
+        </div>
+    </MudMainContent>
+</MudLayout>
+
+<style> 
+    .main-body{
+        background: #F9FAFC;
+    }
+    
+</style>
+
+@code{
+
+    bool open = false;
+
+    void ToggleDrawer()
+    {
+        open = !open;
+    }
+
+    private async Task LogOutAction()
+    {
+        //Clean Storage
+        // var stateProv = (CustomAuthenticationProvider)_authStateProvider;
+        // await stateProv.UpdateAuthenticationState(null);
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,136 @@
+﻿
+@layout MainLayout
+@page "/callrecords"
+@using CS_Emerios_API_Tracker.Data
+@using CS_Emerios_API_Tracker.Entities;
+@using CS_Emerios_API_Tracker.Helper;
+@inject EmeriosDBContext _db;
+@inject IJSRuntime JsRuntime
+
+<PageTitle>Index</PageTitle>
+
+<MudCard Elevation="1" Square="true" >
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row=true Justify="Justify.SpaceBetween">
+                <MudStack Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Row=true>
+                    <MudDatePicker @bind-Date="@startDate" Label="Start date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudDatePicker>
+                    <MudDatePicker @bind-Date="@endDate" Label="End Date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudDatePicker>
+                    <MudSelect T="int" @bind-Value="@CurrentStatus" Label="Status" Dense=true Margin="Margin.Dense" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@(2)">All</MudSelectItem>
+                        <MudSelectItem Value="@(1)">Active</MudSelectItem>
+                        <MudSelectItem Value="@(0)">Inactive</MudSelectItem>
+                    </MudSelect>
+                    <MudButton OnClick="FilterSearch" Color="Color.Success" Size="Size.Medium" Variant="Variant.Filled">Filter</MudButton>
+                </MudStack>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Info" OnClick="ExportRecordLogs">Export</MudButton>
+
+            </MudStack>
+            
+         </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Items="callrecordList" Elevation="0" Dense=true Loading="@loading">
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Agent Id</MudTh>
+                <MudTh>Destination phone</MudTh>
+                <MudTh>Callback URL</MudTh>
+                <MudTh>Ip</MudTh>
+                <MudTh>Audio File sent</MudTh>
+                <MudTh>Call Id</MudTh>
+                <MudTh>Audio lenght</MudTh>
+                <MudTh>Status</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.C_Id</MudTd>
+                <MudTd>@context.C_AgentId</MudTd>
+                <MudTd>@context.DestinationPhone</MudTd>
+                <MudTd>@context.Callback_Url</MudTd>
+                <MudTd>@context.Ip</MudTd>
+                <MudTd>@context.Audio_file_sent</MudTd>
+                <MudTd>@context.Call_Id</MudTd>
+                <MudTd>@context.Audio_length</MudTd>
+                <MudTd>@if (context.Status)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success"></MudIcon>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Error"></MudIcon>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+    </MudTable>
+    </MudCardContent>
+</MudCard>
+@code{
+    private DateTime? startDate = DateTime.Today;
+    private DateTime? endDate = DateTime.Today;
+    private int CurrentStatus = 2;
+    private List<CallLogs> callrecordList = new();
+    private bool loading = false;
+
+
+
+    private async Task FilterSearch()
+    {
+        loading = true;
+        try
+        {
+           
+            if(CurrentStatus == 2)
+                callrecordList =   _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate).ToList();
+            else
+            {
+                bool statusToFilter = CurrentStatus == 0 ? (false) : (CurrentStatus == 1);
+                callrecordList = _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate && b.Status == statusToFilter).ToList();
+
+            }
+           
+         
+        }
+        catch
+        {
+
+        }
+
+        loading = false;
+
+    }
+
+    private async void ExportRecordLogs()
+    {
+        loading = true;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using (var pckg = new ExcelPackage())
+        {
+            var worksheet = pckg.Workbook.Worksheets.Add("Record_logs");
+            var tableBody = worksheet.Cells["A1:A1"].LoadFromCollection(
+                from r in callrecordList
+                select new
+                {
+                    Id = r.C_Id,
+                    AgentID = r.C_AgentId,
+                    Destination = r.DestinationPhone,
+                    Callback_URL = r.Callback_Url,
+                    Ip = r.Ip,
+                    CallID = r.Call_Id,
+                    Audio_Lenght = r.Audio_length
+
+                }, true);
+
+            var header = worksheet.Cells["A1:F1"];
+            worksheet.DefaultColWidth = 25;
+
+            JsRuntime.SaveFileAs($"Record_Logs{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
+
+            loading = false;
+        }
+
+    }
+
+}

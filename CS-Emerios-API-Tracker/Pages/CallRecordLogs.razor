@@ -4,24 +4,36 @@
 @using CS_Emerios_API_Tracker.Data
 @using CS_Emerios_API_Tracker.Entities;
 @using CS_Emerios_API_Tracker.Helper;
+
+
 @inject EmeriosDBContext _db;
 @inject IJSRuntime JsRuntime
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Call Log Records</PageTitle>
 
 <MudCard Elevation="1" Square="true" >
     <MudCardHeader>
         <CardHeaderContent>
             <MudStack Row=true Justify="Justify.SpaceBetween">
                 <MudStack Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Row=true>
-                    <MudDatePicker @bind-Date="@startDate" Label="Start date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudDatePicker>
-                    <MudDatePicker @bind-Date="@endDate" Label="End Date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudDatePicker>
+                    <MudTextField T="DateTime?" @bind-Value="startDate" Format="s" InputType="InputType.DateTimeLocal" Label="Start date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
+                    <MudTextField T="DateTime?" @bind-Value="endDate" Format="s" InputType="InputType.DateTimeLocal" Label="End Date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
                     <MudSelect T="int" @bind-Value="@CurrentStatus" Label="Status" Dense=true Margin="Margin.Dense" Variant="Variant.Outlined">
                         <MudSelectItem Value="@(2)">All</MudSelectItem>
                         <MudSelectItem Value="@(1)">Active</MudSelectItem>
                         <MudSelectItem Value="@(0)">Inactive</MudSelectItem>
                     </MudSelect>
-                    <MudButton OnClick="FilterSearch" Color="Color.Success" Size="Size.Medium" Variant="Variant.Filled">Filter</MudButton>
+                    <MudButton Disabled="@loading" OnClick="FilterSearch" Variant="Variant.Filled" Color="Color.Success">
+                        @if (loading)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Loading</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Filter</MudText>
+                        }
+                    </MudButton>
                 </MudStack>
                 <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Info" OnClick="ExportRecordLogs">Export</MudButton>
 
@@ -39,18 +51,21 @@
                 <MudTh>Ip</MudTh>
                 <MudTh>Audio File sent</MudTh>
                 <MudTh>Call Id</MudTh>
+                <MudTh>Date added</MudTh>
                 <MudTh>Audio lenght</MudTh>
                 <MudTh>Status</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd>@context.C_Id</MudTd>
-                <MudTd>@context.C_AgentId</MudTd>
-                <MudTd>@context.DestinationPhone</MudTd>
-                <MudTd>@context.Callback_Url</MudTd>
-                <MudTd>@context.Ip</MudTd>
-                <MudTd>@context.Audio_file_sent</MudTd>
-                <MudTd>@context.Call_Id</MudTd>
-                <MudTd>@context.Audio_length</MudTd>
+                <MudTd> <MudText Typo="Typo.caption"> @context.C_Id </MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.C_AgentId</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.DestinationPhone</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Callback_Url</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Ip</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Audio_file_sent</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Call_Id </MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Date_added.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                
+                <MudTd><MudText Typo="Typo.caption">@context.Audio_length </MudText></MudTd>
                 <MudTd>@if (context.Status)
                     {
                         <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success"></MudIcon>
@@ -76,12 +91,13 @@
 
 
 
-    private async Task FilterSearch()
+    private void FilterSearch()
     {
         loading = true;
+
         try
         {
-           
+
             if(CurrentStatus == 2)
                 callrecordList =   _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate).ToList();
             else
@@ -90,13 +106,14 @@
                 callrecordList = _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate && b.Status == statusToFilter).ToList();
 
             }
-           
-         
+
+
         }
         catch
         {
 
         }
+        StateHasChanged();
 
         loading = false;
 

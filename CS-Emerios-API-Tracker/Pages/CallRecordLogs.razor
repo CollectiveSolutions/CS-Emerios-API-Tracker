@@ -1,0 +1,153 @@
+﻿
+@layout MainLayout
+@page "/callrecords"
+@using CS_Emerios_API_Tracker.Data
+@using CS_Emerios_API_Tracker.Entities;
+@using CS_Emerios_API_Tracker.Helper;
+
+
+@inject EmeriosDBContext _db;
+@inject IJSRuntime JsRuntime
+
+<PageTitle>Call Log Records</PageTitle>
+
+<MudCard Elevation="1" Square="true" >
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row=true Justify="Justify.SpaceBetween">
+                <MudStack Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Row=true>
+                    <MudTextField T="DateTime?" @bind-Value="startDate" Format="s" InputType="InputType.DateTimeLocal" Label="Start date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
+                    <MudTextField T="DateTime?" @bind-Value="endDate" Format="s" InputType="InputType.DateTimeLocal" Label="End Date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
+                    <MudSelect T="int" @bind-Value="@CurrentStatus" Label="Status" Dense=true Margin="Margin.Dense" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@(2)">All</MudSelectItem>
+                        <MudSelectItem Value="@(1)">Active</MudSelectItem>
+                        <MudSelectItem Value="@(0)">Inactive</MudSelectItem>
+                    </MudSelect>
+                    <MudButton Disabled="@loading" OnClick="FilterSearch" Variant="Variant.Filled" Color="Color.Success">
+                        @if (loading)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Loading</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Filter</MudText>
+                        }
+                    </MudButton>
+                </MudStack>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Info" OnClick="ExportRecordLogs">Export</MudButton>
+
+            </MudStack>
+            
+         </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Items="callrecordList" Elevation="0" Dense=true Loading="@loading">
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Agent Id</MudTh>
+                <MudTh>Destination phone</MudTh>
+                <MudTh>Callback URL</MudTh>
+                <MudTh>Ip</MudTh>
+                <MudTh>Audio File sent</MudTh>
+                <MudTh>Call Id</MudTh>
+                <MudTh>Date added</MudTh>
+                <MudTh>Audio lenght</MudTh>
+                <MudTh>Status</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd> <MudText Typo="Typo.caption"> @context.C_Id </MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.C_AgentId</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.DestinationPhone</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Callback_Url</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Ip</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Audio_file_sent</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Call_Id </MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.Date_added.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                
+                <MudTd><MudText Typo="Typo.caption">@context.Audio_length </MudText></MudTd>
+                <MudTd>@if (context.Status)
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success"></MudIcon>
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.RemoveCircle" Color="Color.Error"></MudIcon>
+                    }
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+    </MudTable>
+    </MudCardContent>
+</MudCard>
+@code{
+    private DateTime? startDate = DateTime.Today;
+    private DateTime? endDate = DateTime.Today;
+    private int CurrentStatus = 2;
+    private List<CallLogs> callrecordList = new();
+    private bool loading = false;
+
+
+
+    private void FilterSearch()
+    {
+        loading = true;
+
+        try
+        {
+
+            if(CurrentStatus == 2)
+                callrecordList =   _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate).ToList();
+            else
+            {
+                bool statusToFilter = CurrentStatus == 0 ? (false) : (CurrentStatus == 1);
+                callrecordList = _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate && b.Status == statusToFilter).ToList();
+
+            }
+
+
+        }
+        catch
+        {
+
+        }
+        StateHasChanged();
+
+        loading = false;
+
+    }
+
+    private async void ExportRecordLogs()
+    {
+        loading = true;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using (var pckg = new ExcelPackage())
+        {
+            var worksheet = pckg.Workbook.Worksheets.Add("Record_logs");
+            var tableBody = worksheet.Cells["A1:A1"].LoadFromCollection(
+                from r in callrecordList
+                select new
+                {
+                    Id = r.C_Id,
+                    AgentID = r.C_AgentId,
+                    Destination = r.DestinationPhone,
+                    Callback_URL = r.Callback_Url,
+                    Ip = r.Ip,
+                    CallID = r.Call_Id,
+                    Audio_Lenght = r.Audio_length
+
+                }, true);
+
+            var header = worksheet.Cells["A1:F1"];
+            worksheet.DefaultColWidth = 25;
+
+            JsRuntime.SaveFileAs($"Record_Logs{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
+
+            loading = false;
+        }
+
+    }
+
+}

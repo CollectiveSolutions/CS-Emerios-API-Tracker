@@ -67,6 +67,15 @@ builder.Services.AddSwaggerGen();
 // Add Mud Component To the library
 builder.Services.AddMudServices();
 
+
+builder.Services.AddSingleton(new HttpClient()
+{
+    BaseAddress = new Uri("https://awspbx.collectivesolution.net:8081"),
+    Timeout = TimeSpan.FromMinutes(5)
+
+});
+
+
 // Add interface and service method
 builder.Services.AddScoped<IADConnection, ADConnection>();
 

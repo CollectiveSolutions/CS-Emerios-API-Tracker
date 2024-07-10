@@ -1,0 +1,39 @@
+﻿@layout MainLayout
+@page "/calldonelive"
+@inject HttpClient httpClient
+
+
+<PageTitle>Live monitoring of call done</PageTitle>
+<MudCard Elevation="1" Square="true" >
+  
+      
+        <MudCardContent>
+        <MudText>
+            @logContent
+        </MudText>
+        </MudCardContent>
+</MudCard>
+@code {
+    private string logContent = "";
+    private bool isLoading = false;
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            logContent = await httpClient.GetStringAsync("/call_done_logs.txt");
+        }
+        catch (Exception ex)
+        {
+            // Handle error (e.g., log, display message)
+            Console.WriteLine($"Error loading log file: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+  
+   
+}

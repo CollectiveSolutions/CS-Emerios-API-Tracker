@@ -154,7 +154,9 @@ namespace CS_Emerios_API_Tracker.Infrastructure.API
                     {
                         var user_ad_info = await this.GetUserInfo(username);
 
-                        is_domain_admin = user_ad_info.MemberOf.Any(group => group.Contains("Domain Admins"));
+                        List<string> allowedDep = new () { "DevOps", "Technology", "It" , "Information Technology" };
+
+                        is_domain_admin = allowedDep.Any(item => user_ad_info.Department.Contains(item));
 
                         if (is_domain_admin)
                         {

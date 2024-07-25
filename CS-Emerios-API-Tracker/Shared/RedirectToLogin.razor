@@ -1,0 +1,15 @@
+﻿@layout LoginLayout
+@inject NavigationManager UriHelper
+
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUrl = UriHelper.Uri;
+
+        if (!UriHelper.Uri.Contains("/Login", StringComparison.OrdinalIgnoreCase))
+        {
+            UriHelper.NavigateTo($"/Login?returnUrl={Uri.EscapeDataString(currentUrl)}");
+        }
+    }
+} 

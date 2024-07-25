@@ -8,6 +8,8 @@
 
 @inject EmeriosDBContext _db;
 @inject IJSRuntime JsRuntime
+@attribute [Authorize]
+
 
 <PageTitle>Call Log Records</PageTitle>
 
@@ -143,7 +145,7 @@
             var header = worksheet.Cells["A1:F1"];
             worksheet.DefaultColWidth = 25;
 
-            JsRuntime.SaveFileAs($"Record_Logs{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
+            await JsRuntime.SaveFileAs($"Record_Logs{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
 
             loading = false;
         }

@@ -1,0 +1,15 @@
+﻿@layout MainLayout
+@page "/"
+@inject NavigationManager UriHelper
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var currentUrl = UriHelper.Uri;
+
+        if (!UriHelper.Uri.Contains("/callrecords", StringComparison.OrdinalIgnoreCase))
+        {
+            UriHelper.NavigateTo($"/callrecords?returnUrl={Uri.EscapeDataString(currentUrl)}");
+        }
+    }
+}

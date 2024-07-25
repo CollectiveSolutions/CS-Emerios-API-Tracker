@@ -44,8 +44,7 @@ namespace CS_Emerios_API_Tracker.Core.DTOs
         public string AdsPath { get; set; }
 
         [JsonPropertyName("objectclass")]
-        [JsonConverter(typeof(SingleOrArrayConverter<string>))]
-        public List<string> objectclass { get; set; }
+        public string objectclass { get; set; }
 
         [JsonPropertyName("msds-supportedencryptiontypes")]
         public int MsdsSupportedEncryptionTypes { get; set; }
@@ -66,7 +65,7 @@ namespace CS_Emerios_API_Tracker.Core.DTOs
         public string LastLogoff { get; set; }
 
         [JsonPropertyName("memberof")]
-        public List<string> MemberOf { get; set; }
+        public string MemberOf { get; set; }
 
         [JsonPropertyName("objectsid")]
         public string ObjectSid { get; set; }
@@ -84,7 +83,7 @@ namespace CS_Emerios_API_Tracker.Core.DTOs
         public string AccountExpires { get; set; }
 
         [JsonPropertyName("usercertificate")]
-        public List<string> UserCertificate { get; set; }
+        public string UserCertificate { get; set; }
 
         [JsonPropertyName("displayname")]
         public string DisplayName { get; set; }
@@ -96,7 +95,7 @@ namespace CS_Emerios_API_Tracker.Core.DTOs
         public string Mail { get; set; }
 
         [JsonPropertyName("dscorepropagationdata")]
-        public List<string> DScorePropagationData { get; set; }
+        public string DScorePropagationData { get; set; }
 
         [JsonPropertyName("admincount")]
         public int AdminCount { get; set; }

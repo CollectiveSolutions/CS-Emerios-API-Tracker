@@ -9,9 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CS-Emerios-API-Tracker", "C
 		{9DE1E16A-E28E-474D-B5F5-0CA2975D665C} = {9DE1E16A-E28E-474D-B5F5-0CA2975D665C}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CS-Emerios-API-Tracker.Core", "CS-Emerios-API-Tracker.Core\CS-Emerios-API-Tracker.Core.csproj", "{5B2147EA-DA68-452F-8BD1-264519820293}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CS-Emerios-API-Tracker.Core", "CS-Emerios-API-Tracker.Core\CS-Emerios-API-Tracker.Core.csproj", "{5B2147EA-DA68-452F-8BD1-264519820293}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CS-Emerios-API-Tracker.Infrastructure", "CS-Emerios-API-Tracker.Infrastructure\CS-Emerios-API-Tracker.Infrastructure.csproj", "{9DE1E16A-E28E-474D-B5F5-0CA2975D665C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CS-Emerios-API-Tracker.Infrastructure", "CS-Emerios-API-Tracker.Infrastructure\CS-Emerios-API-Tracker.Infrastructure.csproj", "{9DE1E16A-E28E-474D-B5F5-0CA2975D665C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

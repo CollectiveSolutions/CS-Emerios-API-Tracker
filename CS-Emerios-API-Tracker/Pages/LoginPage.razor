@@ -1,5 +1,5 @@
 ﻿@layout LoginLayout
-@page "/"
+@page "/Login"
 @using CS_Emerios_API_Tracker.Core.DTOs
 @using CS_Emerios_API_Tracker.Helper
 @using CS_Emerios_API_Tracker.Infrastructure.Interfaces
@@ -81,8 +81,8 @@
             return;
 
         }
-        var result = true;
-        //var result = await AD_Connection.CheckUserCredential(model.UsrUsername, model.UsrPassword);
+        //var result = true;
+        var result = await AD_Connection.CheckUserCredential(model.UsrUsername, model.UsrPassword);
 
         if (!result)
         {
@@ -118,6 +118,8 @@
 
             navigator.NavigateTo("/callrecords", true);
         }
+
+        StateHasChanged();
 
 
     }

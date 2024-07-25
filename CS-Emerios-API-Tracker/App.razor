@@ -3,7 +3,18 @@
     <Router AppAssembly="@typeof(App).Assembly">
         <Found Context="routeData">
             @*Must be in "AuthorizeRouteView"" to be authorized*@
-            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(LoginLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(LoginLayout)">
+               <NotAuthorized>
+                    <RedirectToLogin></RedirectToLogin>
+                </NotAuthorized>
+                  <Authorizing>
+                    <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height:100vh;">
+                        <MudProgressCircular Indeterminate=true Size="Size.Large" Color="Color.Primary">
+
+                        </MudProgressCircular>
+                    </MudStack>
+                </Authorizing>
+            </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
         <NotFound>

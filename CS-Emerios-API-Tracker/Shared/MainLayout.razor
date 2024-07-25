@@ -1,5 +1,5 @@
 ﻿@inherits LayoutComponentBase
-
+@using CS_Emerios_API_Tracker.Helper
 @attribute [Authorize]
 
 <MudThemeProvider  />
@@ -7,17 +7,18 @@
 <MudSnackbarProvider />
 
 
+
 <PageTitle>CS-Emerios-API-Tracker</PageTitle>
 
 <MudLayout Class="main-body">
-    <MudAppBar Elevation="0" Dense="false">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+    <MudAppBar Elevation="1" Fixed="true" >
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Edge="Edge.Start" Color="Color.Inherit" OnClick="@ToggleDrawer" />
         <MudSpacer />
 
-        <MudMenu Icon="@Icons.Material.Filled.AccountCircle">
+        <MudMenu Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Inherit" Variant="Variant.Text">
             <ActivatorContent>
-                <MudAvatar  Size="Size.Medium">
-                    <MudIcon ></MudIcon>
+                <MudAvatar Size="Size.Medium" Color="Color.Inherit">
+                    <MudIcon Icon="@Icons.Material.Filled.People" ></MudIcon>
                 </MudAvatar>
             </ActivatorContent>
             <ChildContent>
@@ -25,13 +26,13 @@
             </ChildContent>
         </MudMenu>
     </MudAppBar>
-    <MudDrawer OpenMiniOnHover="true" @bind-Open="@open" Color="Color.Dark" Elevation="1" PreserveOpenState="true">
+    <MudDrawer @bind-Open="@open" Elevation="1" PreserveOpenState="true">
         <MudDrawerHeader>
             <MudText Typo="Typo.h5">Emerios Tracker</MudText>
         </MudDrawerHeader>
         <NavMenu></NavMenu>
     </MudDrawer>
-    <MudMainContent>
+    <MudMainContent Style="height:100vh;">
         <div class="pb-16 pl-4 pr-4 pt-4">
             @Body
         </div>
@@ -49,6 +50,9 @@
 
     bool open = false;
 
+    [Inject]
+    public AuthenticationStateProvider _authStateProvider { get; set; }
+
     void ToggleDrawer()
     {
         open = !open;
@@ -57,8 +61,8 @@
     private async Task LogOutAction()
     {
         //Clean Storage
-        // var stateProv = (CustomAuthenticationProvider)_authStateProvider;
-        // await stateProv.UpdateAuthenticationState(null);
+        var stateProv = (CustomAuthenticationStateProvider)_authStateProvider;
+        await stateProv.UpdateAuthenticationState(null);
         StateHasChanged();
     }
 }

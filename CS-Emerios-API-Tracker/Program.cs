@@ -70,7 +70,7 @@ builder.Services.AddMudServices();
 
 builder.Services.AddSingleton(new HttpClient()
 {
-    BaseAddress = new Uri("https://gettyxclient.collectivesolution.net"),
+    BaseAddress = new Uri("https://awspbx.collectivesolution.net:8081"),
     Timeout = TimeSpan.FromMinutes(5)
 
 });

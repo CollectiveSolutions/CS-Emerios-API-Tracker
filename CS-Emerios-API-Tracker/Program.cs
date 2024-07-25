@@ -11,6 +11,8 @@ using CS_Emerios_API_Tracker.Helper;
 using CS_Emerios_API_Tracker.Infrastructure.Mapping;
 using CS_Emerios_API_Tracker.Infrastructure.API;
 using CS_Emerios_API_Tracker.Infrastructure.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +26,7 @@ Log.Logger = new LoggerConfiguration()
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddDbContext<EmeriosDBContext>(options => options.UseMySQL(builder.Configuration.GetConnectionString("EmeriosDB")));
 //builder.Services.AddSingleton<WeatherForecastService>();
 
 // Add Optimization of SignalR to precise on what kind of data we will be getting at
@@ -63,6 +66,15 @@ builder.Services.AddSwaggerGen();
 
 // Add Mud Component To the library
 builder.Services.AddMudServices();
+
+
+builder.Services.AddSingleton(new HttpClient()
+{
+    BaseAddress = new Uri("https://awspbx.collectivesolution.net:8081"),
+    Timeout = TimeSpan.FromMinutes(5)
+
+});
+
 
 // Add interface and service method
 builder.Services.AddScoped<IADConnection, ADConnection>();

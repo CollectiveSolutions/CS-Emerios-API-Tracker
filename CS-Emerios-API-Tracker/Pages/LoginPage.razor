@@ -1,0 +1,148 @@
+﻿@layout LoginLayout
+@page "/"
+@using CS_Emerios_API_Tracker.Core.DTOs
+@using CS_Emerios_API_Tracker.Helper
+@using CS_Emerios_API_Tracker.Infrastructure.Interfaces
+
+@inject NavigationManager Navigator
+@inject IADConnection AD_Connection
+@inject ISnackbar Snackbar
+
+<PageTitle>Log In</PageTitle>
+<MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Style="height:100vh;">
+
+
+        <MudCard Elevation="1" Style="width:400px;text-align:left;">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <MudText Align="Align.Center" Typo="Typo.h4">Welcome to Emerios API Tracker</MudText>
+
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudForm>
+                <MudCardContent>
+                    <MudTextField T="string" Label="Username" Required="true" Variant="Variant.Text"
+                                  @bind-Value="model.UsrUsername" For="@(() => model.UsrUsername)"
+                                  OnKeyDown="Enter"
+                                  RequiredError="User name is required!"
+                                  Immediate=true />
+                    <MudTextField T="string" Label="Password" Required="true" Variant="Variant.Text"
+                                  @bind-Value="model.UsrPassword" For="@(() => model.UsrPassword)"
+                                  RequiredError="Password is required!"
+                                  InputType="@PasswordInput"
+                                  OnKeyDown="Enter"
+                                  Immediate=true
+                                  Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon"
+                                  OnAdornmentClick="ShowPassword" AdornmentAriaLabel="Show Password"/>
+                </MudCardContent>
+                <MudCardActions Class="justify-content-center">
+                <MudButton Disabled="@_processing" ButtonType="ButtonType.Button" OnClick="@( async () => await RequestLogIn())" FullWidth="true"
+                               Variant="Variant.Filled" Color="Color.Success">
+                        @if (_processing)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Validating</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Log In</MudText>
+                        }
+
+
+                    </MudButton>
+                </MudCardActions>
+            </MudForm>
+        </MudCard>
+
+
+</MudStack>
+
+
+@code {
+    private bool _processing = false;
+    private string returnUrl = String.Empty;
+    private bool IsShow = false;
+    private string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+    private InputType PasswordInput = InputType.Password;
+    [Inject]
+    NavigationManager navigator { get; set; }
+    [Inject]
+    public AuthenticationStateProvider _authStateProvider { get; set; }
+    private UserLoginDTO model = new UserLoginDTO();
+
+    async Task RequestLogIn()
+    {
+        _processing = true;
+        StateHasChanged();
+        if (String.IsNullOrEmpty(model.UsrPassword) || String.IsNullOrEmpty(model.UsrUsername))
+        {
+            Snackbar.Add("Oops! Looks like you forgot to enter your username or password. Please fill in both fields and try again.", Severity.Error);
+            _processing = false;
+            return;
+
+        }
+        var result = true;
+        //var result = await AD_Connection.CheckUserCredential(model.UsrUsername, model.UsrPassword);
+
+        if (!result)
+        {
+
+            Snackbar.Add("Invalid Credentials", Severity.Error);
+            _processing = false;
+            StateHasChanged();
+            return;
+        }
+
+        //Get Identity
+        //var UserIdentity = await userService.GetUserIdentity(model.UsrUsername);
+
+        //Adding SessionTime
+        //UserIdentity.SessionDate = DateTime.UtcNow;
+        var customAuthStateProvider = (CustomAuthenticationStateProvider)_authStateProvider;
+        //await customAuthStateProvider.UpdateAuthenticationState(UserIdentity);
+        await customAuthStateProvider.UpdateAuthenticationState(model.UsrUsername);
+
+        // Redirect to a default page if there's no return URL
+
+        var uri = new Uri(navigator.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        returnUrl = query.Get("returnUrl");
+
+
+        if (!string.IsNullOrEmpty(returnUrl))
+        {
+            navigator.NavigateTo(returnUrl, true);
+        }
+        else
+        {
+
+            navigator.NavigateTo("/callrecords", true);
+        }
+
+
+    }
+
+    async Task Enter(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+        {
+            await RequestLogIn();
+        }
+    }
+
+    void ShowPassword()
+    {
+        @if (IsShow)
+        {
+            IsShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            IsShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+}

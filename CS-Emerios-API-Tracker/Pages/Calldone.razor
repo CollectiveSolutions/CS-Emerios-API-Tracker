@@ -1,0 +1,102 @@
+﻿@layout MainLayout
+@page "/calldonelive"
+@inject HttpClient httpClient
+
+
+<PageTitle>Live monitoring of call done</PageTitle>
+<MudCard Elevation="1" Square="true" >
+  <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Call done log</MudText>
+            </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton OnClick="@(() =>  RefreshCallDoneLog())" Icon="@Icons.Material.Filled.Refresh" Color="Color.Info" />
+        </CardHeaderActions>
+  </MudCardHeader>
+      
+        <MudCardContent>
+        @if (isLoading)
+        {
+            <MudProgressLinear Indeterminate="true" Class="my-4" Color="Color.Info"></MudProgressLinear>
+        }
+
+        @if (logLines != null && logLines.Any())
+        {
+            <ul>
+                @foreach (var line in logLines)
+                {
+                    <li><MudText Typo="Typo.caption">@line</MudText> </li>
+                }
+            </ul>
+
+            <MudButton @onclick="LoadMoreLines" Color="Color.Success" Variant="Variant.Outlined">Load more</MudButton>
+        }
+        else
+        {
+            <p>Loading log...</p>
+        }
+        </MudCardContent>
+</MudCard>
+@code {
+    private string[] logLines;
+    private string[] allLines;
+    private bool isLoading = false;
+    private int numberOfLinesToShow = 100;
+    private Timer _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshCallDoneLog();
+        SetTimer();
+    }
+
+
+    private void SetTimer()
+    {
+        _timer = new Timer(async _ =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await RefreshCallDoneLog();
+                StateHasChanged();
+            });
+        }, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+
+    private async Task RefreshCallDoneLog()
+    {
+        isLoading = true;
+        try
+        {
+            var unprocessedContent = await httpClient.GetStringAsync("/call_done_logs.txt");
+            allLines = unprocessedContent.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Reverse().ToArray();
+            logLines = allLines.Take(numberOfLinesToShow).ToArray();
+
+        }
+        catch (Exception ex)
+        {
+            // Handle error (e.g., log, display message)
+            Console.WriteLine($"Error loading log file: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void LoadMoreLines()
+    {
+        numberOfLinesToShow += 100;
+        logLines = allLines.Take(numberOfLinesToShow).ToArray();
+    }
+
+  
+
+  
+   
+}

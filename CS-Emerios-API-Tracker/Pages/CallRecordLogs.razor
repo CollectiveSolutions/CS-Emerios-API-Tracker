@@ -4,7 +4,7 @@
 @using CS_Emerios_API_Tracker.Data
 @using CS_Emerios_API_Tracker.Entities;
 @using CS_Emerios_API_Tracker.Helper;
-
+@using Microsoft.EntityFrameworkCore
 
 @inject EmeriosDBContext _db;
 @inject IJSRuntime JsRuntime
@@ -91,7 +91,7 @@
 
 
 
-    private void FilterSearch()
+    private async Task FilterSearch()
     {
         loading = true;
 
@@ -99,11 +99,11 @@
         {
 
             if(CurrentStatus == 2)
-                callrecordList =   _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate).ToList();
+                callrecordList =   await _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate).ToListAsync();
             else
             {
                 bool statusToFilter = CurrentStatus == 0 ? (false) : (CurrentStatus == 1);
-                callrecordList = _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate && b.Status == statusToFilter).ToList();
+                callrecordList = await _db.CallLogs.Where(b => b.Date_added > startDate && b.Date_added < endDate && b.Status == statusToFilter).ToListAsync();
 
             }
 

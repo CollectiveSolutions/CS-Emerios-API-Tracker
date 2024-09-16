@@ -2,12 +2,78 @@
 @page "/calldonelive"
 @inject HttpClient httpClient
 
+@using CS_Emerios_API_Tracker.Data
+@using CS_Emerios_API_Tracker.Entities;
+@using CS_Emerios_API_Tracker.Helper;
+@using Microsoft.EntityFrameworkCore
+
+@inject EmeriosDBContext _db;
+@inject IJSRuntime JsRuntime
+
 
 <PageTitle>Live monitoring of call done</PageTitle>
+<MudCard Elevation="1" Square="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Call Activity Database Log</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton OnClick="@(() =>  RefreshCallDoneLog())" Icon="@Icons.Material.Filled.Refresh" Color="Color.Info" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row=true Justify="Justify.SpaceBetween">
+                <MudStack Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Row=true>
+                    <MudTextField T="DateTime?" @bind-Value="startDate" Format="s" InputType="InputType.DateTimeLocal" Label="Start date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
+                    <MudTextField T="DateTime?" @bind-Value="endDate" Format="s" InputType="InputType.DateTimeLocal" Label="End Date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
+                    <MudSelect T="int" @bind-Value="@CurrentTimezone" Label="Timezone" Dense=true Margin="Margin.Dense" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@(1)">EST</MudSelectItem>
+                        <MudSelectItem Value="@(0)">PH</MudSelectItem>
+                    </MudSelect>
+                    <MudButton Disabled="@loading" OnClick="FilterSearch" Variant="Variant.Filled" Color="Color.Success">
+                        @if (loading)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Loading</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Filter</MudText>
+                        }
+                    </MudButton>
+                </MudStack>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Info" OnClick="ExportRecordLogs">Export</MudButton>
+
+            </MudStack>
+
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Items="callActivityList" Elevation="0" Dense=true Loading="@loading">
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Activity</MudTh>
+                <MudTh>Date added PHT</MudTh>
+                <MudTh>Date added EST</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd> <MudText Typo="Typo.caption"> @context.LogId </MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.ActivityLog</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.DateAdded.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.DateAddedEst.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
 <MudCard Elevation="1" Square="true" >
   <MudCardHeader>
         <CardHeaderContent>
-            <MudText Typo="Typo.h6">Call done log</MudText>
+            <MudText Typo="Typo.h6">Real-Time Call Activity Log</MudText>
             </CardHeaderContent>
         <CardHeaderActions>
             <MudIconButton OnClick="@(() =>  RefreshCallDoneLog())" Icon="@Icons.Material.Filled.Refresh" Color="Color.Info" />
@@ -38,6 +104,13 @@
         </MudCardContent>
 </MudCard>
 @code {
+    private DateTime? startDate = DateTime.Today;
+    private DateTime? endDate = DateTime.Today;
+    private int CurrentTimezone = 1;
+    private List<CallActivityLogs> callActivityList = new();
+    private bool loading = false;
+
+
     private string[] logLines;
     private string[] allLines;
     private bool isLoading = false;
@@ -95,7 +168,63 @@
         logLines = allLines.Take(numberOfLinesToShow).ToArray();
     }
 
-  
+    private async Task FilterSearch()
+    {
+        loading = true;
+
+        try
+        {
+
+            if (CurrentTimezone == 1)
+                callActivityList = await _db.CallActivityLogs.Where(b => b.DateAddedEst > startDate && b.DateAddedEst < endDate).ToListAsync();
+            else
+            {
+                callActivityList = await _db.CallActivityLogs.Where(b => b.DateAdded > startDate && b.DateAdded < endDate).ToListAsync();
+
+            }
+
+
+        }
+        catch
+        {
+
+        }
+        StateHasChanged();
+
+        loading = false;
+
+    }
+
+    private async void ExportRecordLogs()
+    {
+        // loading = true;
+        // ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        // using (var pckg = new ExcelPackage())
+        // {
+        //     var worksheet = pckg.Workbook.Worksheets.Add("Record_logs");
+        //     var tableBody = worksheet.Cells["A1:A1"].LoadFromCollection(
+        //         from r in callrecordList
+        //         select new
+        //         {
+        //             Id = r.C_Id,
+        //             AgentID = r.C_AgentId,
+        //             Destination = r.DestinationPhone,
+        //             Callback_URL = r.Callback_Url,
+        //             Ip = r.Ip,
+        //             CallID = r.Call_Id,
+        //             Audio_Lenght = r.Audio_length
+
+        //         }, true);
+
+        //     var header = worksheet.Cells["A1:F1"];
+        //     worksheet.DefaultColWidth = 25;
+
+        //     JsRuntime.SaveFileAs($"Record_Logs{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
+
+        //     loading = false;
+        // }
+
+    }
 
   
    

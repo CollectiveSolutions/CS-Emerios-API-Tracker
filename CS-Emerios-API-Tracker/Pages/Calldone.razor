@@ -29,7 +29,7 @@
                     <MudTextField T="DateTime?" @bind-Value="endDate" Format="s" InputType="InputType.DateTimeLocal" Label="End Date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
                     <MudSelect T="int" @bind-Value="@CurrentTimezone" Label="Timezone" Dense=true Margin="Margin.Dense" Variant="Variant.Outlined">
                         <MudSelectItem Value="@(1)">EST</MudSelectItem>
-                        <MudSelectItem Value="@(0)">PH</MudSelectItem>
+                        <MudSelectItem Value="@(0)">PHT</MudSelectItem>
                     </MudSelect>
                     <MudButton Disabled="@loading" OnClick="FilterSearch" Variant="Variant.Filled" Color="Color.Success">
                         @if (loading)
@@ -51,17 +51,32 @@
     </MudCardHeader>
     <MudCardContent>
         <MudTable Items="callActivityList" Elevation="0" Dense=true Loading="@loading">
+            <ColGroup>
+                <col style="width: 10%;" />
+                <col style="width: 70%;" />
+                <col style="width: 20%;" />
+            </ColGroup>
             <HeaderContent>
                 <MudTh>ID</MudTh>
                 <MudTh>Activity</MudTh>
-                <MudTh>Date added PHT</MudTh>
-                <MudTh>Date added EST</MudTh>
+                @if(CurrentTimezone == 1)
+                {
+                    <MudTh>Date added EST</MudTh>
+                }
+                else
+                {
+                    <MudTh>Date added PHT</MudTh>
+                }
             </HeaderContent>
             <RowTemplate>
                 <MudTd> <MudText Typo="Typo.caption"> @context.LogId </MudText></MudTd>
                 <MudTd><MudText Typo="Typo.caption">@context.ActivityLog</MudText></MudTd>
-                <MudTd><MudText Typo="Typo.caption">@context.DateAdded.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
-                <MudTd><MudText Typo="Typo.caption">@context.DateAddedEst.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                @if(CurrentTimezone == 1)
+                {
+                    <MudTd><MudText Typo="Typo.caption">@context.DateAddedEst.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                }else{
+                    <MudTd><MudText Typo="Typo.caption">@context.DateAdded.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                }
             </RowTemplate>
             <PagerContent>
                 <MudTablePager />
@@ -180,7 +195,6 @@
             else
             {
                 callActivityList = await _db.CallActivityLogs.Where(b => b.DateAdded > startDate && b.DateAdded < endDate).ToListAsync();
-
             }
 
 
@@ -197,32 +211,28 @@
 
     private async void ExportRecordLogs()
     {
-        // loading = true;
-        // ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        // using (var pckg = new ExcelPackage())
-        // {
-        //     var worksheet = pckg.Workbook.Worksheets.Add("Record_logs");
-        //     var tableBody = worksheet.Cells["A1:A1"].LoadFromCollection(
-        //         from r in callrecordList
-        //         select new
-        //         {
-        //             Id = r.C_Id,
-        //             AgentID = r.C_AgentId,
-        //             Destination = r.DestinationPhone,
-        //             Callback_URL = r.Callback_Url,
-        //             Ip = r.Ip,
-        //             CallID = r.Call_Id,
-        //             Audio_Lenght = r.Audio_length
+        loading = true;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using (var pckg = new ExcelPackage())
+        {
+            var worksheet = pckg.Workbook.Worksheets.Add("Activity_logs");
+            var tableBody = worksheet.Cells["A1:A1"].LoadFromCollection(
+                from r in callActivityList
+                select new
+                {
+                    ID = r.LogId,
+                    ActivityLog = r.ActivityLog,
+                    Date = CurrentTimezone == 1 ? r.DateAddedEst : r.DateAdded
 
-        //         }, true);
+                }, true);
 
-        //     var header = worksheet.Cells["A1:F1"];
-        //     worksheet.DefaultColWidth = 25;
+            var header = worksheet.Cells["A1:C1"];
+            worksheet.DefaultColWidth = 25;
 
-        //     JsRuntime.SaveFileAs($"Record_Logs{startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
+            JsRuntime.SaveFileAs($"Activity_logs {startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
 
-        //     loading = false;
-        // }
+            loading = false;
+        }
 
     }
 

@@ -2,12 +2,93 @@
 @page "/calldonelive"
 @inject HttpClient httpClient
 
+@using CS_Emerios_API_Tracker.Data
+@using CS_Emerios_API_Tracker.Entities;
+@using CS_Emerios_API_Tracker.Helper;
+@using Microsoft.EntityFrameworkCore
+
+@inject EmeriosDBContext _db;
+@inject IJSRuntime JsRuntime
+
 
 <PageTitle>Live monitoring of call done</PageTitle>
+<MudCard Elevation="1" Square="true">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Call Activity Database Log</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton OnClick="@(() =>  RefreshCallDoneLog())" Icon="@Icons.Material.Filled.Refresh" Color="Color.Info" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudStack Row=true Justify="Justify.SpaceBetween">
+                <MudStack Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.FlexStart" Row=true>
+                    <MudTextField T="DateTime?" @bind-Value="startDate" Format="s" InputType="InputType.DateTimeLocal" Label="Start date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
+                    <MudTextField T="DateTime?" @bind-Value="endDate" Format="s" InputType="InputType.DateTimeLocal" Label="End Date" Margin="Margin.Dense" Variant="Variant.Outlined"></MudTextField>
+                    <MudSelect T="int" @bind-Value="@CurrentTimezone" Label="Timezone" Dense=true Margin="Margin.Dense" Variant="Variant.Outlined">
+                        <MudSelectItem Value="@(1)">EST</MudSelectItem>
+                        <MudSelectItem Value="@(0)">PHT</MudSelectItem>
+                    </MudSelect>
+                    <MudButton Disabled="@loading" OnClick="@FilterSearch" Variant="Variant.Filled" Color="Color.Success">
+                        @if (loading)
+                        {
+                            <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                            <MudText Class="ms-2">Loading</MudText>
+                        }
+                        else
+                        {
+                            <MudText>Filter</MudText>
+                        }
+                    </MudButton>
+                </MudStack>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" Color="Color.Info" OnClick="ExportRecordLogs">Export</MudButton>
+
+            </MudStack>
+
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Items="callActivityList" Elevation="0" Dense=true Loading="@loading">
+            <ColGroup>
+                <col style="width: 10%;" />
+                <col style="width: 70%;" />
+                <col style="width: 20%;" />
+            </ColGroup>
+            <HeaderContent>
+                <MudTh>ID</MudTh>
+                <MudTh>Activity</MudTh>
+                @if(CurrentTimezone == 1)
+                {
+                    <MudTh>Date added EST</MudTh>
+                }
+                else
+                {
+                    <MudTh>Date added PHT</MudTh>
+                }
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd> <MudText Typo="Typo.caption"> @context.LogId </MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.ActivityLog</MudText></MudTd>
+                @if(CurrentTimezone == 1)
+                {
+                    <MudTd><MudText Typo="Typo.caption">@context.DateAddedEst.ToString("yyyy-MM-dd HH:mm:ss")</MudText></MudTd>
+                }else{
+                    <MudTd><MudText Typo="Typo.caption">@context.DateAdded.ToString("yyyy-MM-dd HH:mm:ss")</MudText></MudTd>
+                }
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
 <MudCard Elevation="1" Square="true" >
   <MudCardHeader>
         <CardHeaderContent>
-            <MudText Typo="Typo.h6">Call done log</MudText>
+            <MudText Typo="Typo.h6">Real-Time Call Activity Log</MudText>
             </CardHeaderContent>
         <CardHeaderActions>
             <MudIconButton OnClick="@(() =>  RefreshCallDoneLog())" Icon="@Icons.Material.Filled.Refresh" Color="Color.Info" />
@@ -38,6 +119,13 @@
         </MudCardContent>
 </MudCard>
 @code {
+    private DateTime? startDate = DateTime.Today;
+    private DateTime? endDate = DateTime.Today;
+    private int CurrentTimezone = 1;
+    private List<CallActivityLogs> callActivityList = new();
+    private bool loading = false;
+
+
     private string[] logLines;
     private string[] allLines;
     private bool isLoading = false;
@@ -95,7 +183,65 @@
         logLines = allLines.Take(numberOfLinesToShow).ToArray();
     }
 
-  
+    private async Task FilterSearch()
+    {
+        loading = true;
+
+        try
+        {
+            // Allow the UI to update by yielding control before running the heavy operation
+            await Task.Yield();
+
+            if (CurrentTimezone == 1)
+                callActivityList = await _db.CallActivityLogs.Where(b => b.DateAddedEst > startDate && b.DateAddedEst < endDate).ToListAsync();
+            else
+            {
+                callActivityList = await _db.CallActivityLogs.Where(b => b.DateAdded > startDate && b.DateAdded < endDate).ToListAsync();
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading Database: {ex.Message}");
+        }
+        finally
+        {
+            StateHasChanged();
+            loading = false;
+        }
+
+    }
+
+    private async void ExportRecordLogs()
+    {
+        loading = true;
+        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        using (var pckg = new ExcelPackage())
+        {
+            var worksheet = pckg.Workbook.Worksheets.Add("Activity_logs");
+            var tableBody = worksheet.Cells["A1:A1"].LoadFromCollection(
+                from r in callActivityList
+                select new
+                {
+                    ID = r.LogId,
+                    ActivityLog = r.ActivityLog,
+                    Date = CurrentTimezone == 1 ? r.DateAddedEst : r.DateAdded
+
+                }, true);
+
+            var header = worksheet.Cells["A1:C1"];
+            worksheet.DefaultColWidth = 25;
+
+            // Format column C (Date) as DateTime
+            worksheet.Column(3).Style.Numberformat.Format = "yyyy-mm-dd hh:mm:ss";
+
+            JsRuntime.SaveFileAs($"Activity_logs {startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
+
+            loading = false;
+        }
+
+    }
 
   
    

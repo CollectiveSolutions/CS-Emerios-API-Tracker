@@ -16,6 +16,7 @@ namespace CS_Emerios_API_Tracker.Data
         }
 
         public virtual DbSet<CallLogs> CallLogs { get; set; } = null!;
+        public virtual DbSet<CallActivityLogs> CallActivityLogs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +35,16 @@ namespace CS_Emerios_API_Tracker.Data
                 entity.Property(e => e.Date_updated).HasColumnName("date_updated");
                 entity.Property(e => e.Audio_length).HasColumnName("audio_length");
 
+            });
+
+            modelBuilder.Entity<CallActivityLogs>(entity =>
+            {
+                entity.HasKey(e => e.LogId).HasName("log_id");
+                entity.ToTable("emr_record_activity_logs");
+                entity.Property(e => e.LogId).HasColumnName("log_id");
+                entity.Property(e => e.ActivityLog).HasColumnName("activity");
+                entity.Property(e => e.DateAdded).HasColumnName("date_added");
+                entity.Property(e => e.DateAddedEst).HasColumnName("date_added_est");
             });
         }
 

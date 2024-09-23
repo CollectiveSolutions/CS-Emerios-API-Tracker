@@ -31,7 +31,7 @@
                         <MudSelectItem Value="@(1)">EST</MudSelectItem>
                         <MudSelectItem Value="@(0)">PHT</MudSelectItem>
                     </MudSelect>
-                    <MudButton Disabled="@loading" OnClick="FilterSearch" Variant="Variant.Filled" Color="Color.Success">
+                    <MudButton Disabled="@loading" OnClick="@FilterSearch" Variant="Variant.Filled" Color="Color.Success">
                         @if (loading)
                         {
                             <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
@@ -73,9 +73,9 @@
                 <MudTd><MudText Typo="Typo.caption">@context.ActivityLog</MudText></MudTd>
                 @if(CurrentTimezone == 1)
                 {
-                    <MudTd><MudText Typo="Typo.caption">@context.DateAddedEst.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                    <MudTd><MudText Typo="Typo.caption">@context.DateAddedEst.ToString("yyyy-MM-dd HH:mm:ss")</MudText></MudTd>
                 }else{
-                    <MudTd><MudText Typo="Typo.caption">@context.DateAdded.ToString("yyyy-MM-dd hh:mmtt")</MudText></MudTd>
+                    <MudTd><MudText Typo="Typo.caption">@context.DateAdded.ToString("yyyy-MM-dd HH:mm:ss")</MudText></MudTd>
                 }
             </RowTemplate>
             <PagerContent>
@@ -189,6 +189,8 @@
 
         try
         {
+            // Allow the UI to update by yielding control before running the heavy operation
+            await Task.Yield();
 
             if (CurrentTimezone == 1)
                 callActivityList = await _db.CallActivityLogs.Where(b => b.DateAddedEst > startDate && b.DateAddedEst < endDate).ToListAsync();
@@ -199,13 +201,15 @@
 
 
         }
-        catch
+        catch (Exception ex)
         {
-
+            Console.WriteLine($"Error loading Database: {ex.Message}");
         }
-        StateHasChanged();
-
-        loading = false;
+        finally
+        {
+            StateHasChanged();
+            loading = false;
+        }
 
     }
 
@@ -228,6 +232,9 @@
 
             var header = worksheet.Cells["A1:C1"];
             worksheet.DefaultColWidth = 25;
+
+            // Format column C (Date) as DateTime
+            worksheet.Column(3).Style.Numberformat.Format = "yyyy-mm-dd hh:mm:ss";
 
             JsRuntime.SaveFileAs($"Activity_logs {startDate.Value.ToShortDateString()} - {endDate.Value.ToShortDateString()}.xlsx", pckg.GetAsByteArray());
 
